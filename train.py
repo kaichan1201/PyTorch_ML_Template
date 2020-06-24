@@ -49,7 +49,7 @@ def test(model, test_loader, device, out_path):
 
     model.eval()
     pbar = tqdm(enumerate(test_loader), total=len(test_loader), leave=False, ncols=100, desc='Testing')
-    
+
     with torch.no_grad():
         for idx, (data, name) in pbar:
             if idx == 0:
@@ -62,7 +62,5 @@ def test(model, test_loader, device, out_path):
             pred_list.append(pred.item())
             name_list.append(name)
     
-    out_df = pd.DataFrame()
-    out_df['name'] = name_list
-    out_df['pred'] = pred_list
+    out_df = pd.DataFrame({'name': name_list, 'pred': pred_list})
     out_df.to_csv(out_path, index=False)
