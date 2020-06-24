@@ -47,22 +47,6 @@ if __name__ == '__main__':
     os.makedirs(args.save_dir, exist_ok=True)
     writer = SummaryWriter(log_dir=args.save_dir)
     
-    # prepare dataloader
-    train_loader = DataLoader(dataset=CustomData('train', dir_path=args.data_dir),
-                              batch_size=args.batch_size,
-                              num_workers=args.num_workers,
-                              shuffle=True)
-
-    val_loader = DataLoader(dataset=CustomData('val', dir_path=args.data_dir),
-                            batch_size=args.batch_size,
-                            num_workers=args.num_workers,
-                            shuffle=False)
-
-    test_loader = DataLoader(dataset=CustomData('test', dir_path=args.data_dir),
-                             batch_size=1,
-                             num_workers=args.num_workers,
-                             shuffle=False)
-    
     # prepare model
     network = BaseModel().to(device)
 
@@ -75,6 +59,16 @@ if __name__ == '__main__':
         print('Loaded ckpt {}, best Acc: {}'.format(args.load_ckpt, best_acc))
 
     if args.train:
+        # prepare dataloader
+        train_loader = DataLoader(dataset=CustomData('train', dir_path=args.data_dir),
+                                  batch_size=args.batch_size,
+                                  num_workers=args.num_workers,
+                                  shuffle=True)
+
+        val_loader = DataLoader(dataset=CustomData('val', dir_path=args.data_dir),
+                                batch_size=args.batch_size,
+                                num_workers=args.num_workers,
+                                shuffle=False)
         # prepare optimizer
         optimizer = None
         if args.optim == 'sgd':
@@ -100,8 +94,7 @@ if __name__ == '__main__':
             if e <= args.warm_up_epoch:
                 for g in optimizer.param_groups:
                     g['lr'] = args.lr * e / args.warn_up_epoch
-            else:
-                scheduler.step()
+
             # train
             train(model=network, train_loader=train_loader, criterion_cls=criterion_cls, optimizer=optimizer,
                   device=device, writer=writer, cur_epoch=e)
@@ -118,5 +111,14 @@ if __name__ == '__main__':
                         'best_acc': best_acc
                     }, os.path.join(args.save_dir, 'best.pth'))
 
+            if e > args.warm_up_epoch:
+                scheduler.step()
+
     if args.test:
+        # prepare dataloader
+        test_loader = DataLoader(dataset=CustomData('test', dir_path=args.data_dir),
+                                 batch_size=1,
+                                 num_workers=args.num_workers,
+                                 shuffle=False)
+
         test(model=network, test_loader=test_loader, device=device, out_path=args.test_out_csv_path)
