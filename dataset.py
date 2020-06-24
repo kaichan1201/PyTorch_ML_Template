@@ -7,6 +7,16 @@ class CustomData(Dataset):
         self.mode = mode
         self.dir_path = dir_path
 
+        # initialize corresponding dataset & transforms
+        if mode == 'train':
+            pass
+        elif mode == 'val':
+            pass
+        elif mode == 'test':
+            pass
+        else:
+            raise NotImplementedError
+
     def __len__(self):
         pass
 

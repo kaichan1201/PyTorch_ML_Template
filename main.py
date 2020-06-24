@@ -9,7 +9,7 @@ from tensorboardX import SummaryWriter
 
 from dataset import CustomData
 from model import BaseModel
-from train import train, validate, infer
+from train import train, validate, test
 
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -32,6 +32,7 @@ def get_arguments():
     parser.add_argument('--load_ckpt', type=str, default='')
     # save
     parser.add_argument('--save_dir', type=str, default='./ckpt')
+    parser.add_argument('--test_out_csv_path', type=str, default='pred.csv')
     return parser.parse_args()
 
 
@@ -73,7 +74,6 @@ if __name__ == '__main__':
         best_acc = ckpt['best_acc']
         print('Loaded ckpt {}, best Acc: {}'.format(args.load_ckpt, best_acc))
 
-    # training
     if args.train:
         # prepare optimizer
         optimizer = None
@@ -103,20 +103,12 @@ if __name__ == '__main__':
             else:
                 scheduler.step()
             # train
-            train(model=network,
-                  train_loader=train_loader,
-                  criterion_cls=criterion_cls,
-                  optimizer=optimizer,
-                  device=device,
-                  writer=writer,
-                  cur_epoch=e)
+            train(model=network, train_loader=train_loader, criterion_cls=criterion_cls, optimizer=optimizer,
+                  device=device, writer=writer, cur_epoch=e)
 
             if e % args.val_epoch == 0:
                 # validation
-                val_acc = validate(model=network,
-                                   val_loader=val_loader,
-                                   device=device,
-                                   writer=writer,
+                val_acc = validate(model=network, val_loader=val_loader, device=device, writer=writer,
                                    cur_epoch=e)
                 if val_acc > best_acc:
                     best_acc = val_acc
@@ -126,6 +118,5 @@ if __name__ == '__main__':
                         'best_acc': best_acc
                     }, os.path.join(args.save_dir, 'best.pth'))
 
-    # TODO: testing
     if args.test:
-        pass
+        test(model=network, test_loader=test_loader, device=device, out_path=args.test_out_csv_path)

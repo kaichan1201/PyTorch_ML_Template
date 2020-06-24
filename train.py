@@ -1,4 +1,5 @@
 import torch
+import pandas as pd
 from tqdm import tqdm
 
 def train(model, train_loader, criterion_cls, optimizer, device, writer, cur_epoch):
@@ -42,5 +43,26 @@ def validate(model, val_loader, device, writer, cur_epoch):
 
     return val_acc
 
-def infer(model, test_loader):
-    pass
+def test(model, test_loader, device, out_path):
+    pred_list = []
+    name_list = []
+
+    model.eval()
+    pbar = tqdm(enumerate(test_loader), total=len(test_loader), leave=False, ncols=100, desc='Testing')
+    
+    with torch.no_grad():
+        for idx, (data, name) in pbar:
+            if idx == 0:
+                assert data.size(0) == 1
+            data = data.to(device)
+
+            out = model(data)
+            _, pred = torch.max(out, dim=1)
+
+            pred_list.append(pred.item())
+            name_list.append(name)
+    
+    out_df = pd.DataFrame()
+    out_df['name'] = name_list
+    out_df['pred'] = pred_list
+    out_df.to_csv(out_path, index=False)
